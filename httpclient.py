@@ -73,6 +73,7 @@ class HTTPClient(object):
         return buffer.decode('utf-8')
 
     def get_parse(self, url):
+        #after read https://docs.python.org/3/library/urllib.parse.html
         parse = urllib.parse.urlparse(url)
         host = parse.hostname
         path = parse.path
@@ -88,6 +89,7 @@ class HTTPClient(object):
         body = ""
         host, path, port = self.get_parse(url)
         self.connect(host,port)
+        #header example https://code.tutsplus.com/tutorials/http-headers-for-dummies--net-8039
         request = "GET "+path+" HTTP/1.1\r\n" +"Host: "+host+"\r\n\r\n"
         self.sendall(request)
         data = self.recvall(self.socket)
@@ -106,6 +108,7 @@ class HTTPClient(object):
         if not args:
             args = ''
         content = urllib.parse.urlencode(args)
+        #header example https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST
         request = "POST "+path+" HTTP/1.1 \r\n"+"Host: "+host+"\r\n"+"Content-Type: application/x-www-form-urlencoded \r\n"+"Content-Length: "+ str(len(content)) +" \r\n\r\n" + content +" \r\n"  
         self.sendall(request)
         data = self.recvall(self.socket)
