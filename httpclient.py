@@ -41,13 +41,13 @@ class HTTPClient(object):
         return None
 
     def get_code(self, data):
-        return None
+        return int(data.split('\r\n')[0].split(' ')[1])
 
     def get_headers(self,data):
-        return None
+        return data.split('\r\n\r\n')[0]
 
     def get_body(self, data):
-        return None
+        return data.split('\r\n\r\n')[-1]
     
     def sendall(self, data):
         self.socket.sendall(data.encode('utf-8'))
@@ -67,14 +67,46 @@ class HTTPClient(object):
                 done = not part
         return buffer.decode('utf-8')
 
+    def get_parse(self, url):
+        parse = urllib.parse.urlparse(url)
+        host = parse.hostname
+        path = parse.path
+        if not path:
+            path = '/'
+        port = parse.port
+        if not port:
+            port = 80
+        return  host, path, port
+
     def GET(self, url, args=None):
         code = 500
         body = ""
+        host, path, port = self.get_parse(url)
+        self.connect(host,port)
+        request = "GET "+path+" HTTP/1.1\r\n" +"Host: "+host+"\r\n\r\n"
+        self.sendall(request)
+        data = self.recvall(self.socket)
+        code = self.get_code(data)
+        body = self.get_body(data)
+        self.close()
         return HTTPResponse(code, body)
+
+
 
     def POST(self, url, args=None):
         code = 500
         body = ""
+        host, path, port = self.get_parse(url)
+        self.connect(host,port)
+        if not args:
+            args = ''
+        content = urllib.parse.urlencode(args)
+        request = "POST "+path+" HTTP/1.1 \r\n"+"Host: "+host+"\r\n"+"Content-Type: application/x-www-form-urlencoded \r\n"+"Content-Length: "+ str(len(content)) +" \r\n\r\n" + content +" \r\n"  
+        self.sendall(request)
+        data = self.recvall(self.socket)
+        body = self.get_body(data)
+        code = self.get_code(data)
+        self.close()
         return HTTPResponse(code, body)
 
     def command(self, url, command="GET", args=None):
